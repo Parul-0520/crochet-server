@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
-const { sendEmail } = require('../../src/emailService');
+const { sendEmail } = require('../helper/emailService');
 
 // --- 1. SIGNUP (OTP logic ke saath merge kar diya) ---
 router.post('/signup', async (req, res) => {
