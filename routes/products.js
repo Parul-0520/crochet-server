@@ -2,6 +2,7 @@ const Products = require('../models/products');
 const Category = require('../models/category');
 const express = require('express');
 const router = express.Router();
+const upload = require('../utils/cloudinary');
 
 // 1. GET ALL PRODUCTS
 router.get('/', async (req, res) => {
@@ -106,16 +107,19 @@ router.get('/:id', async (req, res) => {
 });
 
 // 3. CREATE PRODUCT
-router.post('/create', async (req, res) => {
+router.post('/create', upload.array('images', 10), async (req, res) => {
     try {
         if (!req.body.category) return res.status(400).send("Category ID is required");
+        
         const category = await Category.findById(req.body.category);
         if (!category) return res.status(404).send("Invalid category");
+
+        const imagesPaths = req.files.map(file => file.path);
 
         let product = new Products({
             name: req.body.name,
             description: req.body.description,
-            images: req.body.images, 
+            images: imagesPaths.length > 0 ? imagesPaths : req.body.images, 
             brand: req.body.brand,
             price: req.body.price,
             category: req.body.category, 
@@ -127,6 +131,7 @@ router.post('/create', async (req, res) => {
             productRAMS: req.body.productRAMS, 
             productSIZE: req.body.productSIZE, 
             productWEIGHT: req.body.productWEIGHT, 
+            location: req.body.location,
         });
 
         product = await product.save();

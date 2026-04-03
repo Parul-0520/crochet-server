@@ -1,3 +1,4 @@
+require('dotenv').config(); // Standard way
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
@@ -42,7 +43,7 @@ mongoose.connect(process.env.CONNECTION_STRING)
 .then(() => {
     console.log('Database Connection is ready...');
     app.listen(process.env.PORT || 4000, () => {
-        console.log(`Server running at http://localhost:4000`);
+        console.log(`Server running at https://crochet-server-jbov.onrender.com`);
     });
 })
 .catch(err => {

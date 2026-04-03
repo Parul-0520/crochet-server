@@ -38,10 +38,12 @@ required: true
             type: String,
         }
     ],
-    location:{
-        type: String,
-        required: true 
-    },
+    // In models/products.js
+location: { 
+    type: String, 
+    default: "All", // Default value if none provided
+    required: false  // Not mandatory anymore
+},
 
 });
 
