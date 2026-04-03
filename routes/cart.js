@@ -38,28 +38,36 @@ router.delete('/:id', async (req, res) => {
 });
 
 // 4. ADD TO CART (Ye wala missing tha)
+// 4. ADD TO CART (Updated logic)
 router.post('/add', async (req, res) => {
     try {
-        const { productId, productName, image, rating, price, quantity, subTotal, userId } = req.body;
+        // Frontend se jo data aa raha hai use sahi variables mein pakdein
+        const { productId, productTitle, images, rating, price, quantity, subTotal, userId } = req.body;
 
-        // Check karein ki ye product pehle se cart mein toh nahi hai
         let cartItem = await Cart.findOne({ productId: productId, userId: userId });
 
         if (cartItem) {
-            // Agar hai toh quantity update kar dein
             cartItem.quantity = quantity;
             cartItem.subTotal = subTotal;
             cartItem = await cartItem.save();
         } else {
-            // Agar naya hai toh create karein
+            // Yahan keys wahi honi chahiye jo MODEL mein hain
             cartItem = new Cart({
-                productId, productName, image, rating, price, quantity, subTotal, userId
+                productTitle, // Model mein yahi naam hai
+                images,       // Model mein yahi naam hai
+                rating,
+                price,
+                quantity,
+                subTotal,
+                productId,
+                userId
             });
             cartItem = await cartItem.save();
         }
 
         res.status(201).json(cartItem);
     } catch (err) {
+        // Ab yahan error message saaf dikhega agar kuch bacha hoga
         res.status(500).json({ success: false, message: err.message });
     }
 });
