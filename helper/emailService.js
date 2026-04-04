@@ -1,7 +1,9 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Isse Nodemailer khud best port/host pick kar lega
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,// Isse Nodemailer khud best port/host pick kar lega
     auth: {
         user: process.env.EMAIL,
         pass: process.env.EMAIL_PASS, // 16-digit App Password bina space ke
