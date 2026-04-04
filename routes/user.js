@@ -10,49 +10,55 @@ router.post('/signup', async (req, res) => {
     try {
         const { name, phone, email, password, isAdmin } = req.body;
         
-        // 1. Checks (Email/Phone)
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.json({ error: true, msg: "User already exist" });
+        const existingUser = await User.findOne({ email: email });
+        if (existingUser) {
+            return res.json({ error: true, msg: "User already exist with this email" });
+        }
+        
+        const existingUserByPh = await User.findOne({ phone: phone });
+        if (existingUserByPh) {
+            return res.json({ error: true, msg: "User already exist with this phone number" });
+        }
 
         const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 2. PEHLE MAIL BHEJO (User save karne se pehle)
-        const emailResponse = await sendEmail(
-            email, 
-            "Verify Your Email", 
-            `Your OTP is ${verifyCode}`, 
-            `<b>Your OTP is ${verifyCode}</b>`
-        );
+        const user = new User({
+            name,
+            phone,
+            email,
+            password: hashedPassword,
+            isAdmin,
+            otp: verifyCode,
+            otpExpires: Date.now() + 600000, // 10 mins
+        });
 
-        if (emailResponse.success) {
-            // 3. AGAR MAIL GAYA, TABHI SAVE KARO
-            const user = new User({
-                name, phone, email,
-                password: hashedPassword,
-                isAdmin,
-                otp: verifyCode,
-                otpExpires: Date.now() + 600000,
-            });
-            await user.save();
+        await user.save();
 
-            console.log("Email sent & User saved:", email);
-            return res.status(200).json({
-                error: false,
-                msg: "OTP Sent to email! Please verify."
-            });
-        } else {
-            // Agar mail hi nahi gaya, toh database mein kachra save nahi hoga
-            console.error("Nodemailer Error:", emailResponse.error);
-            return res.status(500).json({ 
-                error: true, 
-                msg: "Email service down. Please try again later." 
-            });
+        // 4. Send Email 
+        try {
+            await sendEmail(
+                email, 
+                "Verify Your Email", 
+                `Your OTP is ${verifyCode}`, 
+                `<b>Your OTP is ${verifyCode}</b>`
+            );
+            console.log("Email sent successfully to:", email);
+        } catch (mailErr) {
+            console.error("Nodemailer Error:", mailErr);
         }
+
+        res.status(200).json({
+            error: false,
+            msg: "OTP Sent to email! Please verify."
+        });
+
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: true, msg: error.message });
     }
 });
+
 // --- 2. VERIFY OTP ---
 router.post('/verifyemail', async (req, res) => {
     try {
@@ -265,6 +271,7 @@ router.post('/google-login', async (req, res) => {
 });
 
 
+
 router.post('/forgotPassword', async (req, res) => {
     try {
         const { email } = req.body;
@@ -275,28 +282,24 @@ router.post('/forgotPassword', async (req, res) => {
         }
 
         const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+        
         existingUser.otp = verifyCode;
-        existingUser.otpExpires = Date.now() + 600000; 
+        existingUser.otpExpires = Date.now() + 600000; // 10 mins
         await existingUser.save();
 
-        // CHANGE HERE: Result ko variable mein lo
-        const emailResponse = await sendEmail(
-            email, 
-            "Reset Password OTP", 
-            `Your OTP is ${verifyCode}`, 
-            `<b>Your OTP is ${verifyCode}</b>`
-        );
-
-        // Sirf tabhi success bhejo jab emailResponse.success true ho
-        if (emailResponse.success) {
+        try {
+            await sendEmail(
+                email, 
+                "Reset Password OTP", 
+                `Your OTP is ${verifyCode}`, 
+                `<b>Your OTP is ${verifyCode}</b>`
+            );
             console.log("Forgot Password Email Sent Successfully"); 
-            return res.status(200).json({ error: false, msg: "OTP Sent to email!" });
-        } else {
-            // Agar Nodemailer fail hua (Timeout), toh yahan aayega
-            console.error("Nodemailer Error Details:", emailResponse.error);
-            return res.status(500).json({ error: true, msg: "Email service down. Try again later." });
+            res.status(200).json({ error: false, msg: "OTP Sent to email!" });
+        } catch (mailErr) {
+            console.log("Nodemailer Error:", mailErr);
+            res.status(500).json({ error: true, msg: "Failed to send email" });
         }
-
     } catch (error) {
         res.status(500).json({ error: true, msg: error.message });
     }
