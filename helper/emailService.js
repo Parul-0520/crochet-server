@@ -2,15 +2,22 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587, // Change from 465 to 587
-    secure: false, // Port 587 ke liye false hona chahiye
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS, // Make sure this is a 16-digit App Password
+        pass: process.env.EMAIL_PASS,
     },
-    // Ye block Render/Cloud environments mein connection errors ko fix karta hai:
+    // YE SARE PARAMETERS IPV6 ISSUE FIX KARENGE:
+    connectionTimeout: 10000, // 10 seconds timeout
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+    dnsOptions: {
+        family: 4 // FORCE IPV4 (Sabse important line)
+    },
     tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2'
     }
 });
 
