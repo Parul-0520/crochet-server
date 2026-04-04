@@ -1,13 +1,18 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    service: 'gmail', // Isse Nodemailer khud best port/host pick kar lega
     auth: {
         user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS, // 16-digit App Password bina space ke
     },
+    // host: 'smtp.gmail.com',
+    // port: 587,
+    // secure: false,
+    // auth: {
+    //     user: process.env.EMAIL,
+    //     pass: process.env.EMAIL_PASS,
+    // },
     // YE SARE PARAMETERS IPV6 ISSUE FIX KARENGE:
     connectionTimeout: 10000, // 10 seconds timeout
     greetingTimeout: 10000,
@@ -24,7 +29,7 @@ const transporter = nodemailer.createTransport({
 async function sendEmail(to, subject, text, html) {
     try {
         const info = await transporter.sendMail({
-            from: process.env.EMAIL,
+            from: `"Crochet With Parul" <${process.env.EMAIL}>`,
             to,
             subject,
             text,
