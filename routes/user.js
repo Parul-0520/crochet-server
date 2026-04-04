@@ -271,7 +271,6 @@ router.post('/google-login', async (req, res) => {
 });
 
 
-
 router.post('/forgotPassword', async (req, res) => {
     try {
         const { email } = req.body;
@@ -282,24 +281,28 @@ router.post('/forgotPassword', async (req, res) => {
         }
 
         const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-        
         existingUser.otp = verifyCode;
-        existingUser.otpExpires = Date.now() + 600000; // 10 mins
+        existingUser.otpExpires = Date.now() + 600000; 
         await existingUser.save();
 
-        try {
-            await sendEmail(
-                email, 
-                "Reset Password OTP", 
-                `Your OTP is ${verifyCode}`, 
-                `<b>Your OTP is ${verifyCode}</b>`
-            );
+        // CHANGE HERE: Result ko variable mein lo
+        const emailResponse = await sendEmail(
+            email, 
+            "Reset Password OTP", 
+            `Your OTP is ${verifyCode}`, 
+            `<b>Your OTP is ${verifyCode}</b>`
+        );
+
+        // Sirf tabhi success bhejo jab emailResponse.success true ho
+        if (emailResponse.success) {
             console.log("Forgot Password Email Sent Successfully"); 
-            res.status(200).json({ error: false, msg: "OTP Sent to email!" });
-        } catch (mailErr) {
-            console.log("Nodemailer Error:", mailErr);
-            res.status(500).json({ error: true, msg: "Failed to send email" });
+            return res.status(200).json({ error: false, msg: "OTP Sent to email!" });
+        } else {
+            // Agar Nodemailer fail hua (Timeout), toh yahan aayega
+            console.error("Nodemailer Error Details:", emailResponse.error);
+            return res.status(500).json({ error: true, msg: "Email service down. Try again later." });
         }
+
     } catch (error) {
         res.status(500).json({ error: true, msg: error.message });
     }
